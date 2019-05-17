@@ -2,7 +2,7 @@
 
 import sys
 import argparse
-from pubnub.enums import PNOperationType, PNStatusCategory
+from pubnub.enums import PNOperationType, PNStatusCategory, PNReconnectionPolicy
 from pubnub.pnconfiguration import PNConfiguration
 from pubnub.pubnub import PubNub, SubscribeListener
 from pubnub.callbacks import SubscribeCallback
@@ -15,6 +15,12 @@ class MySubscribeCallback(SubscribeCallback):
     def status(self, pubnub, status):
         if status.category == PNStatusCategory.PNConnectedCategory:
             print('connected')
+        elif status.category == PNStatusCategory.PNUnexpectedDisconnectCategory:
+            pubnub.reconnect()
+            print('reconnected')
+        elif status.category == PNStatusCategory.PNTimeoutCategory:
+            pubnub.reconnect()
+            print('reconnected')
 
     def message(self, pubnub, message):
         print("({0}) {1}:    {2}".format(message.message["time"], message.message["nickname"], message.message["msg"]))
@@ -24,6 +30,7 @@ class MySubscribeCallback(SubscribeCallback):
 
 def init_chatroom():
     pnconfig = PNConfiguration()
+    pnconfig.reconnect_policy = PNReconnectionPolicy.LINEAR
     pnconfig.publish_key = pubkey
     pnconfig.subscribe_key = subkey
     pubnub = PubNub(pnconfig)
